@@ -1,0 +1,31 @@
+DEFINITION MODULE IMAPMisc;
+
+        (********************************************************)
+        (*                                                      *)
+        (*    Miscellaneous procedures for the IMAP4 server     *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Started:            19 March 2001                   *)
+        (*  Last edited:        22 November 2009                *)
+        (*  Status:             OK                              *)
+        (*                                                      *)
+        (********************************************************)
+
+
+FROM INIData IMPORT (*type*) HINI;
+
+PROCEDURE CompareStr (first, second: ARRAY OF CHAR): INTEGER;
+
+    (* Compares two strings, with alphabetic case ignored.  *)
+    (* Returns >0 if first > second, and so on.             *)
+
+PROCEDURE SetTNImode (TNImode: BOOLEAN);
+
+    (* If parameter is TRUE, specifies use of a TNI file. *)
+
+PROCEDURE OpenOurINIFile(): HINI;
+
+    (* Opens WEASEL.INI or WEASEL.TNI, returns a handle to it. *)
+
+END IMAPMisc.
+

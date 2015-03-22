@@ -1,0 +1,20 @@
+- GENDEBUG +
+- LINENO +
+- GENHISTORY +
+-multithread+
+- HEAPLIMIT="200000000"
+- GCTHRESHOLD="200000000"
+-link    = "xlink /MAP @%s",mkfname#mkfext;
+
+-TRACKTNIUSAGE:-
+-DUMPSD:-
+
+-INCL_BASE:+
+-INCL_PM:+
+-INCL_DOSDEVIOCTL:+
+
+!module IMAPD
+!module SO32DLL.lib
+!module TCP32DLL.lib
+
+

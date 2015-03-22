@@ -1,0 +1,79 @@
+DEFINITION MODULE BufferedTextStreams;
+
+        (********************************************************)
+        (*                                                      *)
+        (*        Text buffers for line-oriented file input     *)
+        (*                                                      *)
+        (*          (At present we support only input)          *)
+        (*                                                      *)
+        (*   This module maintains a read-ahead buffer for each *)
+        (*   open file.  It supports only sequential input.     *)
+        (*   For semi-sequential with some random access, use   *)
+        (*   module TextBuffers instead.                        *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Started:            27 April 2005                   *)
+        (*  Last edited:        28 April 2005                   *)
+        (*  Status:             OK                              *)
+        (*                                                      *)
+        (********************************************************)
+
+
+FROM SYSTEM IMPORT LOC;
+FROM FileOps IMPORT FilePos;
+
+(************************************************************************)
+
+TYPE
+    TextStream;               (* is private *)
+
+(************************************************************************)
+(*                           OPEN/CLOSE/ETC                             *)
+(************************************************************************)
+
+PROCEDURE OpenForReading (name: ARRAY OF CHAR): TextStream;
+
+    (* Opens an existing file for read-only access, and returns its     *)
+    (* buffer ID.                                                       *)
+
+PROCEDURE TSFileOpened (TS: TextStream): BOOLEAN;
+
+    (* Use this to check whether an 'open' operation succeeded. *)
+
+PROCEDURE CloseTS (VAR (*INOUT*) TS: TextStream);
+
+    (* Closes a file. *)
+
+(************************************************************************)
+(*                         FILE POSITION/SIZE                           *)
+(************************************************************************)
+
+PROCEDURE TSCurrentPosition (TS: TextStream): FilePos;
+
+    (* Returns the current position within the file. *)
+
+PROCEDURE TSStartPosition (TS: TextStream): FilePos;
+
+    (* Returns the start-of-file position. *)
+
+PROCEDURE TSSetPosition (TS: TextStream;  position: FilePos);
+
+    (* Sets the current position within the file. *)
+
+(************************************************************************)
+(*                              INPUT                                   *)
+(************************************************************************)
+
+PROCEDURE TSReadRaw (TS: TextStream;  VAR (*OUT*) data: ARRAY OF LOC;
+                   limit: CARDINAL;  VAR (*OUT*) NumberRead: CARDINAL);
+
+    (* Reads a buffer-full of information from a file. *)
+
+PROCEDURE TSReadLine (TS: TextStream;  VAR (*OUT*) data: ARRAY OF CHAR);
+
+    (* Reads a line of text from a file.  Assumption: a line ends with  *)
+    (* CRLF.  To avoid tortuous logic, I take the CR as end of line and *)
+    (* skip the LF.  At end of file we return with data[0] = Ctrl/Z.    *)
+
+END BufferedTextStreams.
+

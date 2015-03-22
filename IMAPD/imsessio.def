@@ -1,0 +1,40 @@
+DEFINITION MODULE IMSession;
+
+        (********************************************************)
+        (*                                                      *)
+        (*           Session handler for the IMAP4 server       *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Started:            1 March 2001                    *)
+        (*  Last edited:        23 December 2013                *)
+        (*  Status:             OK                              *)
+        (*                                                      *)
+        (********************************************************)
+
+
+FROM Sockets IMPORT
+    (* type *)  Socket, SockAddr;
+
+
+PROCEDURE SetSessionParameters (MaxUserLimit, TimeoutLimit: CARDINAL);
+
+    (* Sets some parameters specified by the INI file: maximum nunber   *)
+    (* of simultaneous users, and how long a session can be idle before *)
+    (* it is forcibly closed.                                           *)
+
+PROCEDURE NewSession (S: Socket;  addr: SockAddr): BOOLEAN;
+
+    (* Starts and runs a client session.  The session runs in a separate        *)
+    (* thread; this procedure returns after starting the session, it does not   *)
+    (* wait until the session is over.                                          *)
+
+PROCEDURE NumberOfUsers(): CARDINAL;
+
+    (* Returns the number of users who are currently logged on. *)
+
+PROCEDURE StopAllUsers;
+
+    (* Attempts to close down all sessions that are still open. *)
+
+END IMSession.
+

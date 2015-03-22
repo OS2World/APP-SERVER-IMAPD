@@ -1,0 +1,102 @@
+DEFINITION MODULE Users;
+
+        (********************************************************)
+        (*                                                      *)
+        (*           User data for the IMAP4 server             *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Started:            8 March 2001                    *)
+        (*  Last edited:        2 January 2014                  *)
+        (*  Status:             OK                              *)
+        (*                                                      *)
+        (********************************************************)
+
+FROM BoxLists IMPORT (*type*) BoxPtr;
+FROM Domains  IMPORT (*type*) Domain;
+FROM SBuffers IMPORT (*type*) SBuffer;
+FROM TransLog IMPORT (*type*) TransactionLogID;
+FROM Replies  IMPORT (*type*) ReplyCxt;
+FROM Names    IMPORT (*type*) FilenameString;
+FROM Parser   IMPORT (*type*) MessageFlagSet;
+
+
+TYPE
+    User;               (* is private *)
+
+PROCEDURE FindUser (VAR (*IN*) username: ARRAY OF CHAR;  D: Domain): User;
+
+    (* Finds this user in the master list of users, or creates a new    *)
+    (* user record if it doesn't already exist.                         *)
+
+PROCEDURE DiscardUser (VAR (*INOUT*) U: User);
+
+    (* Discards the user record. *)
+
+PROCEDURE UCheckpoint (U: User);
+
+    (* Brings the user information up to date. *)
+
+PROCEDURE UDoListing (RC: ReplyCxt;  U: User;
+                           VAR (*IN*) mask: FilenameString;
+                                            IncludeAll: BOOLEAN): BOOLEAN;
+
+    (* Responds to the LIST or LSUB command.  The IncludeAll parameter  *)
+    (* is TRUE for LIST, FALSE FOR LSUB.  The mask may include          *)
+    (* wildcards.                                                       *)
+
+    (* The mask parameter may include wildcards.  In the mask, '*'      *)
+    (* matches anything including the hierarchy delimiter, and '%' is   *)
+    (* like '*' except that it doesn't match the hierarchy delimiter.   *)
+
+PROCEDURE UCreateBox (U: User;  VAR (*IN*) boxname: ARRAY OF CHAR;
+                             VAR (*OUT*) alreadyexists: BOOLEAN): BOOLEAN;
+
+    (* Creates a new mailbox.  Note that this will not immediately      *)
+    (* appear in the BoxList, but will be added there when the user     *)
+    (* lists or selects new boxes.                                      *)
+
+PROCEDURE UDeleteBox (U: User;  VAR (*IN*) boxname: ARRAY OF CHAR): BOOLEAN;
+
+    (* Deletes a mailbox, including deleting all the files it contains. *)
+    (* If it has subdirectories, it acquires the \Noselect attribute.   *)
+    (* If it has subdirectories and already has the \Noselect attribute *)
+    (* the deletion attempt will fail.                                  *)
+
+PROCEDURE UFindBox (U: User;  VAR (*IN*) boxname: ARRAY OF CHAR): BoxPtr;
+
+    (* Returns a pointer to the mailbox in the user's boxlist tree.     *)
+    (* Returns NIL if no box found.                                     *)
+
+PROCEDURE URenameBox (U: User;
+                  VAR (*INOUT*) oldname, newname: ARRAY OF CHAR;
+                  VAR (*OUT*) targetexists: BOOLEAN): BOOLEAN;
+
+    (* Renames a mailbox. *)
+
+PROCEDURE USubscribeToBox (U: User;
+                           VAR (*INOUT*) boxname: ARRAY OF CHAR): BOOLEAN;
+
+    (* The client is subscribing to this mailbox. *)
+
+PROCEDURE UUnsubscribeToBox (U: User;
+                            VAR (*INOUT*) boxname: ARRAY OF CHAR): BOOLEAN;
+
+    (* The client is unsubscribing from this mailbox. *)
+
+PROCEDURE UGetStatus (RC: ReplyCxt;  U: User;
+                        VAR (*IN*) boxname, args: ARRAY OF CHAR): BOOLEAN;
+
+    (* Responds to the STATUS command.  The 'args' argument should be a *)
+    (* parenthesised list.                                              *)
+
+PROCEDURE UAddMessage (RC: ReplyCxt;  U: User;  BP: BoxPtr;
+                       IsInbox: BOOLEAN;
+                       flags: MessageFlagSet;
+                       date, time, count: CARDINAL): BOOLEAN;
+
+    (* Creates a new message in box BP^, whose content is the     *)
+    (* next 'count' characters to be fetched from the client.     *)
+    (* The file date/time is set iff date > 0.                    *)
+
+END Users.
+

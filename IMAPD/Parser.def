@@ -1,0 +1,104 @@
+DEFINITION MODULE Parser;
+
+        (********************************************************)
+        (*                                                      *)
+        (*         Parser for some of the IMAP4 syntax          *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Started:            7 March 2001                    *)
+        (*  Last edited:        12 June 2003                    *)
+        (*  Status:             OK                              *)
+        (*                                                      *)
+        (********************************************************)
+
+
+FROM Names IMPORT (*type*) ArgPointer;
+
+TYPE
+    MessageFlag = (seen, answered, flagged, deleted, draft, recent);
+    MessageFlagSet = SET OF MessageFlag;
+
+(************************************************************************)
+(*  General rule: for parsing procedures having 'input' and 'result'    *)
+(*  parameters, a function result of TRUE means that the token found    *)
+(*  has been deleted from the head of 'input' and moved to 'result'.    *)
+(*  If the result is FALSE then 'input' is left unchanged and 'result'  *)
+(*  contains no meaningful result.                                      *)
+(************************************************************************)
+
+PROCEDURE SPACE (VAR (*INOUT*) input: ARRAY OF CHAR): BOOLEAN;
+
+    (* Space character. *)
+
+PROCEDURE StripLeadingSpaces (VAR (*INOUT*) buffer: ARRAY OF CHAR);
+
+    (* Deletes leading spaces from buffer. *)
+
+PROCEDURE Number (VAR (*INOUT*) input: ARRAY OF CHAR;
+                   VAR (*OUT*) result: CARDINAL): BOOLEAN;
+
+    (* Numeric string. *)
+
+PROCEDURE Atom (Wild: BOOLEAN;  VAR (*INOUT*) input: ARRAY OF CHAR;
+                   VAR (*OUT*) result: ARRAY OF CHAR): BOOLEAN;
+
+    (* Atom, with wildcards allowed iff Wild=TRUE. *)
+
+PROCEDURE AString (VAR (*INOUT*) input: ARRAY OF CHAR;
+                   VAR (*OUT*) result: ARRAY OF CHAR): BOOLEAN;
+
+    (* Atom or string. *)
+
+PROCEDURE AStringW (Wild: BOOLEAN;  VAR (*INOUT*) input: ARRAY OF CHAR;
+                   VAR (*OUT*) result: ARRAY OF CHAR): BOOLEAN;
+
+    (* Atom or string, with wildcards allowed in atom iff Wild=TRUE. *)
+
+PROCEDURE DecodeFlags (VAR (*INOUT*) buffer: ARRAY OF CHAR): MessageFlagSet;
+
+    (* Converts a character string to a MessageFlagSet.  On exit,  *)
+    (* buffer contains anything left after removing the options.   *)
+
+PROCEDURE FlagList (VAR (*INOUT*) input: ARRAY OF CHAR;
+                     VAR (*OUT*) flags: MessageFlagSet): BOOLEAN;
+
+    (* Parenthesised list of APPEND codes. *)
+
+PROCEDURE Date (VAR (*INOUT*) input: ARRAY OF CHAR;
+                   VAR (*OUT*) result: ARRAY OF CHAR): BOOLEAN;
+
+    (* Day-month-year or Day month year string. *)
+
+PROCEDURE PackDate (datestring: ArgPointer): CARDINAL;
+
+    (* Converts a textual date (in dd-mmm-yyyy format) into the packed  *)
+    (* format used by the file system.                                  *)
+
+PROCEDURE DateTime (VAR (*INOUT*) input: ARRAY OF CHAR;
+                       VAR (*OUT*) date, time: CARDINAL): BOOLEAN;
+
+    (* Parses a date/time string of the form "dd-mmm-yyyy hh:mm:ss TZ", *)
+    (* where TZ is a four-digit time zone optionally preceded by '+' or *)
+    (* '-'.  Returns a packed date and time, in the format used by the  *)
+    (* file system, and corrected to our local time zone.               *)
+
+PROCEDURE Literal (VAR (*INOUT*) input: ARRAY OF CHAR;
+                                    VAR (*OUT*) count: CARDINAL): BOOLEAN;
+
+    (* Literal string with count.  In this case we calculate the count, *)
+    (* but leave it to the caller to pick up the actual literal string, *)
+    (* which starts on the next input line.                             *)
+
+PROCEDURE Match (VAR (*INOUT*) input: ARRAY OF CHAR;  string: ARRAY OF CHAR): BOOLEAN;
+
+    (* Match of a string, with character case not significant. *)
+
+PROCEDURE MatchNoDelete (VAR (*IN*) input: ARRAY OF CHAR;
+                                   string: ARRAY OF CHAR): BOOLEAN;
+
+    (* Match of a string, with character case not significant.  Unlike *)
+    (* most of the procedures in this module, this one does NOT        *)
+    (* alter the input string.                                         *)
+
+END Parser.
+

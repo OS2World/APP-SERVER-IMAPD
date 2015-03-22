@@ -1,0 +1,33 @@
+DEFINITION MODULE IMV;
+
+        (****************************************************************)
+        (*                                                              *)
+        (*                     IMAPD version number                     *)
+        (*                                                              *)
+        (*    Started:        10 December 2007                          *)
+        (*    Last edited:    2 October 2014                            *)
+        (*    Status:         OK                                        *)
+        (*                                                              *)
+        (****************************************************************)
+
+
+CONST
+    version = "0.37";
+
+    (* At present the following parameters are not used; and perhaps    *)
+    (* they'll never be used, because we're already using the Domains   *)
+    (* module that takes its information from the Weasel version file.  *)
+    (* (I think - need to check this.)                                  *)
+
+    (*
+    TimedDemo = FALSE;
+
+    (* Expiry date for timed demo. *)
+
+    expyear = 2007;
+    expmonth = 8;
+    expday = 30;
+    *)
+
+END IMV.
+

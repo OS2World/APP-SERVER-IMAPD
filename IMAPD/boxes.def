@@ -1,0 +1,124 @@
+DEFINITION MODULE Boxes;
+
+        (********************************************************)
+        (*                                                      *)
+        (*                      Mailboxes                       *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Started:            6 March 2003                    *)
+        (*  Last edited:        9 June 2003                     *)
+        (*  Status:             OK so far                       *)
+        (*                                                      *)
+        (********************************************************)
+
+
+FROM MSet     IMPORT (*type*) MessageSet;
+FROM Names    IMPORT (*type*) FilenameString;
+FROM Replies  IMPORT (*type*) ReplyCxt;
+FROM TransLog IMPORT (*type*) TransactionLogID;
+FROM Parser   IMPORT (*type*) MessageFlagSet;
+
+
+TYPE
+    MailboxUser;      (* is private *)
+
+
+PROCEDURE ConsumeCard (VAR (*INOUT*) buffer: ARRAY OF CHAR): CARDINAL;
+
+    (* Converts a character string to a number, also stripping spaces.  *)
+    (* On exit, buffer contains anything left after removing the        *)
+    (* characters we have used.                                         *)
+
+PROCEDURE OpenMailbox (RC: ReplyCxt;  VAR (*IN*) dir: FilenameString;
+                                 IsInbox, ReadOnly: BOOLEAN): MailboxUser;
+
+    (* Loads our internal record of the mail items in this directory. *)
+
+PROCEDURE RefreshItemList (MBU: MailboxUser);
+
+    (* Resynchronizes the in-memory and on-disk information about this  *)
+    (* mailbox.                                                         *)
+
+PROCEDURE CloseMailboxUser (VAR (*INOUT*) MBU: MailboxUser);
+
+    (* Deregisters this user as a user of the mailbox, and closes the   *)
+    (* mailbox if this was the last user of that mailbox.               *)
+
+PROCEDURE LockMailbox (MBU: MailboxUser);
+
+    (* Obtains exclusive access to the mailbox. *)
+
+PROCEDURE UnlockMailbox (MBU: MailboxUser);
+
+    (* Releases exclusive access to the mailbox. *)
+
+PROCEDURE SelectBoxReplies (MBU: MailboxUser);
+
+    (* Responses to the SELECT command.    *)
+
+PROCEDURE FetchItems (RC: ReplyCxt;  MBU: MailboxUser;
+                       VAR (*INOUT*) set: MessageSet;
+                       VAR (*INOUT*) params: ARRAY OF CHAR;
+                       UseUID: BOOLEAN;  LogID: TransactionLogID): BOOLEAN;
+
+    (* Responds to the FETCH instruction, or the UID FETCH instruction  *)
+    (* if UseUID is TRUE.  Returns FALSE if we can't fetch it or if     *)
+    (* this is something we haven't yet implemented.                    *)
+    (* On exit, the set of message numbers has been discarded.          *)
+    (* The params string is destroyed as a side-effect.                 *)
+
+PROCEDURE StoreItemData (RC: ReplyCxt;  MBU: MailboxUser;
+                       VAR (*INOUT*) set: MessageSet;
+                       VAR (*INOUT*) params: ARRAY OF CHAR;
+                       UseUID: BOOLEAN;  LogID: TransactionLogID): BOOLEAN;
+
+    (* Responds to the STORE instruction, or the UID STORE instruction  *)
+    (* if UseUID is TRUE.  Returns FALSE if we can't do the operation   *)
+    (* or if this is something we haven't yet implemented.              *)
+    (* On exit, the set of message numbers has been discarded.          *)
+    (* The params string is destroyed as a side-effect.                 *)
+
+PROCEDURE CopySet (set: MessageSet;  src, dst: MailboxUser;
+                                           UseUID: BOOLEAN): BOOLEAN;
+
+    (* Copies a set of messages from the src mailbox to the dst         *)
+    (* mailbox.  (We are executing the UID COPY instruction if UseUID   *)
+    (* is TRUE.)  If we can't do the operation it is cancelled, and     *)
+    (* the copied subset is deleted from the destination, and the       *)
+    (* function result is FALSE.                                        *)
+    (* On exit, the set of message numbers has been discarded.          *)
+
+PROCEDURE DoExpunge (RC: ReplyCxt;  MBU: MailboxUser): BOOLEAN;
+
+    (* Deletes all messages with the \Deleted flag set, sending back an *)
+    (* untagged EXPUNGE response.                                       *)
+
+PROCEDURE SearchResult (RC: ReplyCxt;  MBU: MailboxUser;
+                        VAR (*INOUT*) keys: ARRAY OF CHAR;  UseUID: BOOLEAN);
+
+    (* Responds to the SEARCH command, or the UID SEARCH command  *)
+    (* if UseUID is TRUE.                                         *)
+    (* The params string is destroyed as a side-effect.           *)
+
+PROCEDURE DoStatusReply (MBU: MailboxUser;  UIDV: CARDINAL;
+                        VAR (*IN*) boxname, args: ARRAY OF CHAR): BOOLEAN;
+
+    (* Responds to the STATUS command, where args is the parenthesised  *)
+    (* list that was supplied with that command.   UIDV is the UID      *)
+    (* validity code for this mailbox; the caller has already looked it *)
+    (* up in case we need it.                                           *)
+
+PROCEDURE DoAddMessage (MBU: MailboxUser;  flags: MessageFlagSet;
+                                    date, time, count: CARDINAL): BOOLEAN;
+
+    (* Creates a new message in mailbox M, whose content is the   *)
+    (* next 'count' characters to be fetched from the client.     *)
+    (* The file date/time is set iff date > 0.                    *)
+
+PROCEDURE StatusResponse (MBU: MailboxUser);
+
+    (* Replies with the current status of the mailbox.               *)
+    (* Assumption: we already have exclusive access to this mailbox. *)
+
+END Boxes.
+

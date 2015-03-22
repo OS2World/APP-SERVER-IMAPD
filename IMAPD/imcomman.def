@@ -1,0 +1,41 @@
+DEFINITION MODULE IMCommands;
+
+        (********************************************************)
+        (*                                                      *)
+        (*        Command interpreter for IMAP4 server          *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Started:            2 March 2001                    *)
+        (*  Last edited:        9 June 2003                     *)
+        (*  Status:             OK                              *)
+        (*                                                      *)
+        (********************************************************)
+
+
+FROM Semaphores IMPORT (*type*) Semaphore;
+FROM TransLog IMPORT (*type*) TransactionLogID;
+FROM SBuffers IMPORT (*type*) SBuffer;
+
+
+TYPE Session;                (* is private *)
+
+PROCEDURE OpenSession (SBuff: SBuffer;  ServerIPAddress, ClientIPAddress: CARDINAL;
+                                    KeepAlive: Semaphore;
+                                    LogID: TransactionLogID): Session;
+
+    (* Creates a new session state record.  During lengthy operations           *)
+    (* we have to do a Signal(KeepAlive) every so often in order to stop the    *)
+    (* session from timing out.                                                 *)
+
+PROCEDURE CloseSession (S: Session);
+
+    (* Destroys the session state record. *)
+
+PROCEDURE HandleCommand (S: Session;  VAR (*INOUT*) CmdLine: ARRAY OF CHAR;
+                                                     VAR (*OUT*) Quit: BOOLEAN);
+
+    (* Executes one user command.  Returns with Quit=TRUE if the command is one *)
+    (* that closes the session, or if the connection is lost.                   *)
+
+END IMCommands.
+

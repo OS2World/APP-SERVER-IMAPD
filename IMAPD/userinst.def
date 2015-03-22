@@ -1,0 +1,157 @@
+DEFINITION MODULE UserInstances;
+
+        (********************************************************)
+        (*                                                      *)
+        (*           User data for the IMAP4 server             *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Started:            8 March 2001                    *)
+        (*  Last edited:        2 January 2014                  *)
+        (*  Status:             OK                              *)
+        (*                                                      *)
+        (********************************************************)
+
+
+FROM Replies  IMPORT (*type*) ReplyCxt;
+FROM SBuffers IMPORT (*type*) SBuffer;
+FROM TransLog IMPORT (*type*) TransactionLogID;
+FROM Names    IMPORT (*type*) UserName, FilenameString;
+FROM MSet     IMPORT (*type*) MessageSet;
+FROM Parser   IMPORT (*type*) MessageFlagSet;
+FROM BoxLists IMPORT (*type*) BoxPtr;
+FROM Domains  IMPORT (*type*) Domain;
+
+
+TYPE UserInstance;     (* is private *)
+
+PROCEDURE LoginUser (VAR (*OUT*) UI: UserInstance;  SB: SBuffer;
+                     VAR (*IN*) username, password: ARRAY OF CHAR;
+                     hostaddr: CARDINAL;
+                     RC: ReplyCxt;
+                     LogID: TransactionLogID): BOOLEAN;
+
+    (* Checks that username and password are correct.  If so, creates   *)
+    (* a new user instance record and returns TRUE.                     *)
+
+PROCEDURE CreateUserInstance (VAR (*OUT*) UI: UserInstance;  SB: SBuffer;
+                                        username: ARRAY OF CHAR;
+                                        D: Domain;
+                                        RC: ReplyCxt;
+                                        LogID: TransactionLogID): BOOLEAN;
+
+    (* Like LoginUser, except that we assume that no password check     *)
+    (* is needed because the user has been authenticated by some other  *)
+    (* mechanism.  We do however check that this user is allowed to     *)
+    (* use IMAP.                                                        *)
+
+PROCEDURE CloseUserInstance (VAR (*INOUT*) UI: UserInstance);
+
+    (* Discards the user instance record, after any tidying up that is  *)
+    (* needed on a logout (whether explicit or forced).                 *)
+
+PROCEDURE DoListing (UI: UserInstance;  refname, mailbox: FilenameString;
+                                    IncludeAll: BOOLEAN): BOOLEAN;
+
+    (* Responds to the LIST or LSUB command.  The IncludeAll parameter  *)
+    (* is TRUE for LIST, FALSE FOR LSUB.                                *)
+
+PROCEDURE FindBox (UI: UserInstance;  boxname: ARRAY OF CHAR): BoxPtr;
+
+    (* Finds a mailbox, returns NIL if it does not exist. *)
+
+PROCEDURE SelectBox (UI: UserInstance;  boxname: ARRAY OF CHAR;
+                                              ReadOnly: BOOLEAN): BOOLEAN;
+
+    (* Selects a mailbox. *)
+
+PROCEDURE SecondarySelectBox (UI: UserInstance;  boxname: ARRAY OF CHAR): BOOLEAN;
+
+    (* Opens a mailbox without marking it as selected.  This is to      *)
+    (* support the COPY operation that refers to two mailboxes.  The    *)
+    (* secondary box will be closed at the next available opportunity,  *)
+    (* i.e. it cannot be counted on to be open for more than one        *)
+    (* operation.                                                       *)
+
+PROCEDURE DeselectBox (UI: UserInstance);
+
+    (* Deselects the currently selected mailbox.  *)
+
+PROCEDURE StatusUpdate (UI: UserInstance);
+
+    (* Sends the client the current status of the selected mailbox. *)
+
+PROCEDURE DoFetch (UI: UserInstance;  VAR (*INOUT*) args: ARRAY OF CHAR;
+                   UseUID: BOOLEAN;  LogID: TransactionLogID): BOOLEAN;
+
+    (* Fetches one or more messages as specified in args.  If the       *)
+    (* UseUID argument is TRUE, we are doing a UID FETCH.               *)
+    (* The args string is destroyed as a side-effect.                   *)
+
+PROCEDURE DoStore (UI: UserInstance;  VAR (*INOUT*) args: ARRAY OF CHAR;
+                   UseUID: BOOLEAN;  LogID: TransactionLogID): BOOLEAN;
+
+    (* Stores attributes for one or more messages as specified in args. *)
+    (* If the UseUID argument is TRUE, we are doing a UID STORE.        *)
+
+PROCEDURE CreateBox (UI: UserInstance;
+                       VAR (*INOUT*) boxname: ARRAY OF CHAR;
+                       VAR (*OUT*) alreadyexists: BOOLEAN): BOOLEAN;
+
+    (* Creates a new mailbox. *)
+
+PROCEDURE DeleteBox (UI: UserInstance;
+                       VAR (*INOUT*) boxname: ARRAY OF CHAR): BOOLEAN;
+
+    (* Deletes an existing mailbox. *)
+
+PROCEDURE RenameBox (UI: UserInstance;
+                    VAR (*INOUT*) oldname, newname: ARRAY OF CHAR;
+                    VAR (*OUT*) targetexists: BOOLEAN): BOOLEAN;
+
+    (* Renames an existing mailbox. *)
+
+PROCEDURE SubscribeToBox (UI: UserInstance;
+                       VAR (*INOUT*) boxname: ARRAY OF CHAR): BOOLEAN;
+
+    (* Subscribes to a mailbox. *)
+
+PROCEDURE UnsubscribeFromBox (UI: UserInstance;
+                       VAR (*INOUT*) boxname: ARRAY OF CHAR): BOOLEAN;
+
+    (* Removes a subscription. *)
+
+PROCEDURE DoCheckpoint (UI: UserInstance);
+
+    (* CHECK command. *)
+
+PROCEDURE Expunge (UI: UserInstance): BOOLEAN;
+
+    (* Removes messages marked for deletion.  Returns FALSE if the      *)
+    (* box was read-only or no box was selected.                        *)
+
+PROCEDURE DoCopy (UI: UserInstance;  set: MessageSet;
+                                     UseUID: BOOLEAN): BOOLEAN;
+
+    (* Copies messages from the selected mailbox to the secondary box. *)
+
+PROCEDURE SearchBox (UI: UserInstance;  VAR (*INOUT*) keys: ARRAY OF CHAR;
+                                                         UseUID: BOOLEAN);
+
+    (* Searches mailbox with search criteria given in keys. *)
+
+PROCEDURE GetStatus (UI: UserInstance;
+                         VAR (*IN*) boxname, args: ARRAY OF CHAR): BOOLEAN;
+
+    (* Responds to the STATUS command.  The 'args' argument should be a *)
+    (* parenthesised list.                                              *)
+
+PROCEDURE AddMessage (UI: UserInstance;  BP: BoxPtr;  IsInbox: BOOLEAN;
+                      flags: MessageFlagSet;  date, time: CARDINAL;
+                       count: CARDINAL): BOOLEAN;
+
+    (* Creates a new message in box BP^, whose content is the     *)
+    (* next 'count' characters to be fetched from the client.     *)
+    (* The file date/time is set iff date > 0.                    *)
+
+END UserInstances.
+

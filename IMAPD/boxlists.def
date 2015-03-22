@@ -1,0 +1,106 @@
+DEFINITION MODULE BoxLists;
+
+        (********************************************************)
+        (*                                                      *)
+        (*                 Lists of mailboxes                   *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Started:            6 March 2003                    *)
+        (*  Last edited:        25 November 2009                *)
+        (*  Status:             OK                              *)
+        (*                                                      *)
+        (********************************************************)
+
+
+FROM Replies  IMPORT (*type*) ReplyCxt;
+FROM SBuffers IMPORT (*type*) SBuffer;
+FROM Names    IMPORT (*type*) FilenameString;
+FROM MSet     IMPORT (*type*) MessageSet;
+
+TYPE
+    BoxPtr;                   (* is private *)
+    ListOfBoxes;              (* is private *)
+
+
+PROCEDURE InitUIDValidity;
+
+    (* Sets the value of variable NextUIDValidity. *)
+
+PROCEDURE BoxExists (box: BoxPtr): BOOLEAN;
+
+    (* TRUE iff the box is not NIL. *)
+
+PROCEDURE CreateBoxList (VAR (*IN*) dir: FilenameString): ListOfBoxes;
+
+    (* Creates a new boxlist. *)
+
+PROCEDURE CloseBoxList (VAR (*INOUT*) L: ListOfBoxes);
+
+    (* Discards the entire tree whose root is L, doing whatever tidying *)
+    (* up is necessary.                                                 *)
+
+PROCEDURE DirectoryOf (BP: BoxPtr;  VAR (*OUT*) directory: FilenameString);
+
+    (* Sets directory to the full directory name of this mailbox. *)
+
+PROCEDURE HeadSplit (VAR (*OUT*) head: ARRAY OF CHAR;
+                     VAR (*INOUT*) path: ARRAY OF CHAR);
+
+    (* Finds the first '/' in path.  Returns head as the part before    *)
+    (* the '/', and path as the part after.  If there is no '/',        *)
+    (* returns with head = original path, and path as the empty string. *)
+
+PROCEDURE UpdateBoxList (VAR (*INOUT*) BL: ListOfBoxes);
+
+    (* Brings our information about this list up to date. *)
+
+PROCEDURE ListTo (RC: ReplyCxt;  L: ListOfBoxes;
+                  VAR (*IN*) dir, mask: FilenameString;  IncludeAll: BOOLEAN);
+
+    (* Sends the list to the client defined by RC.                      *)
+    (* The mask parameter may include wildcards.  In the mask, '*'      *)
+    (* matches anything including the hierarchy delimiter, and '%' is   *)
+    (* like '*' except that it doesn't match the hierarchy delimiter.   *)
+
+PROCEDURE FindBox (VAR (*INOUT*) L: ListOfBoxes;
+                              VAR (*IN*) boxname: ARRAY OF CHAR): BoxPtr;
+
+    (* Returns a pointer to the mailbox in the list whose head is L.    *)
+    (* A possible side-effect is the updating of list L.                *)
+    (* Returns NIL if no box found.                                     *)
+
+PROCEDURE UIDValidityResponse (RC: ReplyCxt;  box: BoxPtr);
+
+    (* Sends an untagged OK UIDVALIDITY response to the client. *)
+
+PROCEDURE UIDValidityCode (box: BoxPtr): CARDINAL;
+
+    (* Returns the UIDVALIDITY code for this mailbox.  The result is    *)
+    (* zero if the box cannot be found.                                 *)
+
+PROCEDURE DoSubscribe (M: BoxPtr): BOOLEAN;
+
+    (* Subscribes to this box. *)
+
+PROCEDURE DoUnsubscribe (M: BoxPtr): BOOLEAN;
+
+    (* Subscribes to this box. *)
+
+PROCEDURE RemoveBox (L: ListOfBoxes;
+                     VAR (*IN*) boxname: ARRAY OF CHAR): BOOLEAN;
+
+    (* Deletes a mailbox, including deleting all the files it contains. *)
+    (* If it has subdirectories, it acquires the \Noselect attribute.   *)
+    (* If it has subdirectories and already has the \Noselect attribute *)
+    (* the deletion attempt will fail.                                  *)
+
+PROCEDURE DoRename (L: ListOfBoxes;
+                    VAR (*INOUT*) oldname, newname: ARRAY OF CHAR);
+
+    (* Renames a mailbox, and all inferior boxes, keeping the flags.    *)
+    (* We assume that the caller is taking care of the file system      *)
+    (* directory restructuring; this procedure is purely concerned with *)
+    (* updating our internal list of mailboxes.                         *)
+
+END BoxLists.
+

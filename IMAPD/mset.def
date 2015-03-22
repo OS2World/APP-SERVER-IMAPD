@@ -1,0 +1,42 @@
+DEFINITION MODULE MSet;
+
+        (********************************************************)
+        (*                                                      *)
+        (*                     Message sets                     *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Started:            13 March 2001                   *)
+        (*  Last edited:        16 March 2003                   *)
+        (*  Status:             Just started                    *)
+        (*                                                      *)
+        (********************************************************)
+
+TYPE
+    MessageSet;    (* is private *)
+
+PROCEDURE GetSet (VAR (*INOUT*) input: ARRAY OF CHAR): MessageSet;
+
+    (* Parses a "set" specification at the head of input, deletes those  *)
+    (* characters from input.                                            *)
+
+PROCEDURE NonEmptySet (S: MessageSet): BOOLEAN;
+
+    (* Returns TRUE iff S is not an empty set. *)
+
+PROCEDURE NextMember (VAR (*INOUT*) S: MessageSet): CARDINAL;
+
+    (* Returns the first member of the set, deletes that member. *)
+
+PROCEDURE NextMemberFrom (VAR (*INOUT*) S: MessageSet;
+                                        startfrom: CARDINAL): CARDINAL;
+
+    (* Returns the first member of the set whose value is at least      *)
+    (* equal to startfrom, deletes that member and everything           *)
+    (* preceding it.  Returns 0 if there is no such member.             *)
+
+PROCEDURE DiscardSet (VAR (*INOUT*) S: MessageSet);
+
+    (* Deletes the set from memory. *)
+
+END MSet.
+

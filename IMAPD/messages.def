@@ -1,0 +1,100 @@
+DEFINITION MODULE Messages;
+
+        (********************************************************)
+        (*                                                      *)
+        (*         Properties of messages at the file level     *)
+        (*                                                      *)
+        (*  Programmer:         P. Moylan                       *)
+        (*  Started:            16 March 2003                   *)
+        (*  Last edited:        12 January 2013                 *)
+        (*  Status:             OK so far                       *)
+        (*                                                      *)
+        (********************************************************)
+
+
+FROM TransLog IMPORT TransactionLogID;
+
+FROM Names    IMPORT (*type*) FilenameString;
+FROM Replies  IMPORT (*type*) ReplyCxt;
+FROM Types    IMPORT (*type*) CARD64;
+
+
+TYPE BodyInfo; MultiBodyInfo;        (* is private *)
+     StructureData;                  (* is private *)
+
+PROCEDURE SizeOfMessage (VAR (*IN*) file: FilenameString): CARD64;
+
+    (* Returns the RFC822.SIZE attribute. *)
+
+PROCEDURE PackedDate (VAR (*IN*) file: FilenameString): CARDINAL;
+
+    (* Returns the date (in packed format) that this file was received. *)
+
+PROCEDURE PackedDateTime (VAR (*IN*) file: FilenameString;  VAR (*OUT*) date, time: CARDINAL);
+
+    (* Returns the date and time (in packed format) that this file was received. *)
+
+PROCEDURE HeaderDate (VAR (*IN*) file: FilenameString): CARDINAL;
+
+    (* Returns the date (in packed format) from the 'Date:' header      *)
+    (* line.  If there is no such line, date is 00 Jan 1980.            *)
+
+PROCEDURE InitBodyInfo (VAR (*OUT*) BI: BodyInfo);
+
+    (* Sets BI to an initially clear state. *)
+
+PROCEDURE ParseFetchSection (VAR (*IN*) params: ARRAY OF CHAR;
+                             VAR (*OUT*) result: BodyInfo);
+
+    (* Parses the BODY part of the FETCH command parameters.  On entry  *)
+    (* the caller has already consumed the leading '['.                 *)
+
+PROCEDURE DiscardBodyInfo (VAR (*INOUT*) BI: BodyInfo);
+
+    (* Disposes of a BodyInfo structure. *)
+
+PROCEDURE FindInHeader (VAR (*IN*) file: FilenameString;
+                            VAR (*IN*) key, text: ARRAY OF CHAR): BOOLEAN;
+
+    (* Returns TRUE iff there is a header line labelled 'key:'  *)
+    (* that has text as a substring.                            *)
+
+PROCEDURE FindInText (VAR (*IN*) file: FilenameString;
+                        VAR (*IN*) string: ARRAY OF CHAR;
+                                 IncludeHeader: BOOLEAN): BOOLEAN;
+
+    (* Returns TRUE iff the file includes the given string      *)
+    (* (case insensitive).  Searches the header lines as well   *)
+    (* as the body iff IncludeHeader is TRUE.                   *)
+
+PROCEDURE DiscardStructureData (VAR (*INOUT*) SD: StructureData);
+
+    (* Disposes of the data structure. *)
+
+PROCEDURE SendSection (RC: ReplyCxt;  VAR (*IN*) file: FilenameString;
+                                      VAR (*INOUT*) info: BodyInfo;
+                                      VAR (*INOUT*) SD: StructureData);
+
+    (* Sends back the specified part of the file. *)
+
+PROCEDURE ReportBodyStructure (VAR (*IN*) file: FilenameString;
+                               RC: ReplyCxt;
+                               VAR (*INOUT*) buffer: ARRAY OF CHAR;
+                               VAR (*INOUT*) SD: StructureData);
+
+    (* Creates the BODYSTRUCTURE reply for a fetch, and appends *)
+    (* it to buffer.  The RC parameter permits us to send a     *)
+    (* partial reply when the buffer is about to overflow.      *)
+    (* The SD parameter allows us to work out the structure     *)
+    (* once and preserve the answer over several calls.         *)
+
+PROCEDURE ReturnEnvelope (VAR (*IN*) file: FilenameString;
+                               VAR (*INOUT*) buffer: ARRAY OF CHAR);
+
+    (* Appends the ENVELOPE information to buffer.  Note that   *)
+    (* this is for the top-level headers.  The envelope data    *)
+    (* for embedded RFC-822 parts is needed only for some       *)
+    (* FETCH options.                                           *)
+
+END Messages.
+
